@@ -5,14 +5,14 @@ mod tests{
 	use crate::core::*;
 
 	#[test]
-	fn sum(){
+	fn evaluate(){
 		let x=UnknownId::new(0);
 		let sum=Add::new(Scalar::new(1.0),Scalar::new(2.0));
 		assert_eq!(sum.evaluate(),3.0);
 		assert_eq!(sum.derivative(x).evaluate(),0.0);
 	}
 	#[test]
-	fn unknown(){
+	fn try_evaluate(){
 		let x=UnknownId::new(0);
 		let sum=Add::new(Scalar::new(2),x);
 		let mut environment=HashMap::new();
