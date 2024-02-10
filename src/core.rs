@@ -75,8 +75,13 @@ impl<T:Zero+Identity> Evaluate<T> for Morph{
 }
 
 //represents an unknown value.  gains the type of the current evaluation.
-#[derive(Clone,Copy,Debug,Hash,id::Id,Eq,PartialEq)]
+#[derive(Clone,Copy,Debug,Hash,Eq,PartialEq)]
 pub struct UnknownId(u32);
+impl UnknownId{
+	pub fn new(value:u32)->Self{
+		Self(value)
+	}
+}
 impl<T:Copy> TryEvaluate<T> for UnknownId{
 	fn try_evaluate(&self,values:&HashMap<UnknownId,T>)->Result<T,TryEvaluateError>{
 		values.get(self).copied().ok_or(TryEvaluateError::MissingUnknown(*self))
