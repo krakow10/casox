@@ -1,0 +1,9 @@
+[package]
+name = "casox"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+id = { git = "https://git.itzana.me/Quaternions/id", rev = "1f710976cc786c8853dab73d6e1cee53158deeb0" }
