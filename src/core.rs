@@ -122,25 +122,25 @@ impl<T:Zero> Derivative for Scalar<T>{
 	}
 }
 
-pub struct Add<A,B>(A,B);
-impl<A,B> Add<A,B>{
+pub struct Plus<A,B>(A,B);
+impl<A,B> Plus<A,B>{
 	pub fn new(a:A,b:B)->Self{
 		Self(a,b)
 	}
 }
-impl<T:std::ops::Add<Output=T>,A:Evaluate<T>,B:Evaluate<T>> Evaluate<T> for Add<A,B>{
+impl<T:std::ops::Add<Output=T>,A:Evaluate<T>,B:Evaluate<T>> Evaluate<T> for Plus<A,B>{
 	fn evaluate(&self)->T{
 		self.0.evaluate()+self.1.evaluate()
 	}
 }
-impl<T:std::ops::Add<Output=T>,A:TryEvaluate<T>,B:TryEvaluate<T>> TryEvaluate<T> for Add<A,B>{
+impl<T:std::ops::Add<Output=T>,A:TryEvaluate<T>,B:TryEvaluate<T>> TryEvaluate<T> for Plus<A,B>{
 	fn try_evaluate(&self,values:&HashMap<UnknownId,T>)->Result<T,TryEvaluateError>{
 		Ok(self.0.try_evaluate(values)?+self.1.try_evaluate(values)?)
 	}
 }
-impl<A:Derivative,B:Derivative> Derivative for Add<A,B>{
-	type Derivative=Add<A::Derivative,B::Derivative>;
+impl<A:Derivative,B:Derivative> Derivative for Plus<A,B>{
+	type Derivative=Plus<A::Derivative,B::Derivative>;
 	fn derivative(&self,unknown_id:UnknownId)->Self::Derivative{
-		Add(self.0.derivative(unknown_id),self.1.derivative(unknown_id))
+		Plus(self.0.derivative(unknown_id),self.1.derivative(unknown_id))
 	}
 }
