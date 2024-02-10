@@ -121,7 +121,28 @@ impl<T:Zero> Derivative for Scalar<T>{
 		Self(T::zero())
 	}
 }
+//TODO: generalize arithmetic
+impl<T,B> std::ops::Add<B> for Scalar<T>{
+	type Output=Plus<Self,B>;
+	fn add(self,b:B)->Self::Output{
+		Plus(self,b)
+	}
+}
+impl<T,B> std::ops::Mul<B> for Scalar<T>{
+	type Output=Times<Self,B>;
+	fn mul(self,b:B)->Self::Output{
+		Times(self,b)
+	}
+}
 
+//TODO: something nice like this
+// pub trait Arithmetic:Add+Sub+Mul+Div+Pow+Mod{}
+// impl<A:Add,B:Add> std::ops::Add<B> for A{
+// 	type Output=Plus<A,B>;
+// 	fn add(a:A,b:B)->Self::Output{
+// 		Plus(a,b)
+// 	}
+// }
 pub struct Plus<A,B>(A,B);
 impl<A,B> Plus<A,B>{
 	pub fn new(a:A,b:B)->Self{
@@ -142,6 +163,19 @@ impl<A:Derivative,B:Derivative> Derivative for Plus<A,B>{
 	type Derivative=Plus<A::Derivative,B::Derivative>;
 	fn derivative(&self,unknown_id:UnknownId)->Self::Derivative{
 		Plus(self.0.derivative(unknown_id),self.1.derivative(unknown_id))
+	}
+}
+//arithmetic
+impl<A,B,C> std::ops::Add<C> for Plus<A,B>{
+	type Output=Plus<Self,C>;
+	fn add(self,c:C)->Self::Output{
+		Plus(self,c)
+	}
+}
+impl<A,B,C> std::ops::Mul<C> for Plus<A,B>{
+	type Output=Times<Self,C>;
+	fn mul(self,c:C)->Self::Output{
+		Times(self,c)
 	}
 }
 
@@ -168,5 +202,18 @@ impl<A:Derivative+Copy,B:Derivative+Copy> Derivative for Times<A,B>{
 			Times(self.0,self.1.derivative(unknown_id)),
 			Times(self.0.derivative(unknown_id),self.1),
 		)
+	}
+}
+//arithmetic
+impl<A,B,C> std::ops::Add<C> for Times<A,B>{
+	type Output=Plus<Self,C>;
+	fn add(self,c:C)->Self::Output{
+		Plus(self,c)
+	}
+}
+impl<A,B,C> std::ops::Mul<C> for Times<A,B>{
+	type Output=Times<Self,C>;
+	fn mul(self,c:C)->Self::Output{
+		Times(self,c)
 	}
 }
