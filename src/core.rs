@@ -144,3 +144,29 @@ impl<A:Derivative,B:Derivative> Derivative for Plus<A,B>{
 		Plus(self.0.derivative(unknown_id),self.1.derivative(unknown_id))
 	}
 }
+
+pub struct Times<A,B>(A,B);
+impl<A,B> Times<A,B>{
+	pub fn new(a:A,b:B)->Self{
+		Self(a,b)
+	}
+}
+impl<T:std::ops::Mul<Output=T>,A:Evaluate<T>,B:Evaluate<T>> Evaluate<T> for Times<A,B>{
+	fn evaluate(&self)->T{
+		self.0.evaluate()*self.1.evaluate()
+	}
+}
+impl<T:std::ops::Mul<Output=T>,A:TryEvaluate<T>,B:TryEvaluate<T>> TryEvaluate<T> for Times<A,B>{
+	fn try_evaluate(&self,values:&HashMap<UnknownId,T>)->Result<T,TryEvaluateError>{
+		Ok(self.0.try_evaluate(values)?*self.1.try_evaluate(values)?)
+	}
+}
+impl<A:Derivative+Copy,B:Derivative+Copy> Derivative for Times<A,B>{
+	type Derivative=Plus<Times<A,B::Derivative>,Times<A::Derivative,B>>;
+	fn derivative(&self,unknown_id:UnknownId)->Self::Derivative{
+		Plus(
+			Times(self.0,self.1.derivative(unknown_id)),
+			Times(self.0.derivative(unknown_id),self.1),
+		)
+	}
+}
