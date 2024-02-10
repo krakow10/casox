@@ -34,7 +34,7 @@ pub trait TryEvaluate<T>{
 // }
 pub trait Derivative{
 	type Derivative;
-	fn derivative(&self)->Self::Derivative;
+	fn derivative(&self,unknown_id:UnknownId)->Self::Derivative;
 }
 
 //f32
@@ -60,12 +60,36 @@ impl Identity for i32{
 	}
 }
 
-//represents an unknown value.
+//turns into the respective typed value during evaluation
+pub enum Morph{
+	Zero,
+	Identity,
+}
+impl<T:Zero+Identity> Evaluate<T> for Morph{
+	fn evaluate(&self)->T{
+		match self{
+			Morph::Zero=>T::zero(),
+			Morph::Identity=>T::identity(),
+		}
+	}
+}
+
+//represents an unknown value.  gains the type of the current evaluation.
 #[derive(Clone,Copy,Debug,Hash,id::Id,Eq,PartialEq)]
 pub struct UnknownId(u32);
 impl<T:Copy> TryEvaluate<T> for UnknownId{
 	fn try_evaluate(&self,values:&HashMap<UnknownId,T>)->Result<T,TryEvaluateError>{
 		values.get(self).copied().ok_or(TryEvaluateError::MissingUnknown(*self))
+	}
+}
+impl Derivative for UnknownId{
+	type Derivative=Morph;
+	fn derivative(&self,unknown_id:UnknownId)->Self::Derivative{
+		if *self==unknown_id{
+			Morph::Identity
+		}else{
+			Morph::Zero
+		}
 	}
 }
 
@@ -86,10 +110,10 @@ impl<T:Copy> TryEvaluate<T> for Scalar<T>{
 		Ok(self.evaluate())
 	}
 }
-impl<A:Zero> Derivative for Scalar<A>{
+impl<T:Zero> Derivative for Scalar<T>{
 	type Derivative=Self;
-	fn derivative(&self)->Self{
-		Self(A::zero())
+	fn derivative(&self,_unknown_id:UnknownId)->Self::Derivative{
+		Self(T::zero())
 	}
 }
 
@@ -111,7 +135,7 @@ impl<T:std::ops::Add<Output=T>,A:TryEvaluate<T>,B:TryEvaluate<T>> TryEvaluate<T>
 }
 impl<A:Derivative,B:Derivative> Derivative for Add<A,B>{
 	type Derivative=Add<A::Derivative,B::Derivative>;
-	fn derivative(&self)->Add<A::Derivative,B::Derivative>{
-		Add(self.0.derivative(),self.1.derivative())
+	fn derivative(&self,unknown_id:UnknownId)->Self::Derivative{
+		Add(self.0.derivative(unknown_id),self.1.derivative(unknown_id))
 	}
 }
