@@ -3,6 +3,12 @@ use std::collections::HashMap;
 pub trait Zero{
 	fn zero()->Self;
 }
+pub trait Identity{
+	fn identity()->Self;
+}
+pub trait Unit{
+	fn unit(&self)->Self;
+}
 
 pub trait Evaluate<T>{
 	fn evaluate(&self)->T;
@@ -37,10 +43,20 @@ impl Zero for f32{
 		0.0
 	}
 }
+impl Identity for f32{
+	fn identity()->f32{
+		1.0
+	}
+}
 //i32
 impl Zero for i32{
 	fn zero()->i32{
 		0
+	}
+}
+impl Identity for i32{
+	fn identity()->i32{
+		1
 	}
 }
 
