@@ -122,6 +122,7 @@ impl<T:Zero> Derivative for Scalar<T>{
 	}
 }
 //TODO: generalize arithmetic
+//use macros?
 impl<T,B> std::ops::Add<B> for Scalar<T>{
 	type Output=Plus<Self,B>;
 	fn add(self,b:B)->Self::Output{
