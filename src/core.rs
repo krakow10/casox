@@ -123,6 +123,7 @@ impl<C> std::ops::Div<C> for UnknownId{
 	}
 }
 
+#[derive(Clone,Copy)]
 pub struct Scalar<T>(T);
 impl<T> Scalar<T>{
 	pub const fn new(value:T)->Self{
@@ -181,6 +182,7 @@ impl<A,C> std::ops::Div<C> for Scalar<A>{
 // 		Plus(a,b)
 // 	}
 // }
+#[derive(Clone,Copy)]
 pub struct Plus<A,B>(A,B);
 impl<A,B> Plus<A,B>{
 	pub const fn new(a:A,b:B)->Self{
@@ -229,6 +231,7 @@ impl<A,B,C> std::ops::Div<C> for Plus<A,B>{
 	}
 }
 
+#[derive(Clone,Copy)]
 pub struct Minus<A,B>(A,B);
 impl<A,B> Minus<A,B>{
 	pub const fn new(a:A,b:B)->Self{
@@ -277,6 +280,7 @@ impl<A,B,C> std::ops::Div<C> for Minus<A,B>{
 	}
 }
 
+#[derive(Clone,Copy)]
 pub struct Times<A,B>(A,B);
 impl<A,B> Times<A,B>{
 	pub const fn new(a:A,b:B)->Self{
@@ -328,6 +332,7 @@ impl<A,B,C> std::ops::Div<C> for Times<A,B>{
 	}
 }
 
+#[derive(Clone,Copy)]
 pub struct Divide<A,B>(A,B);
 impl<A,B> Divide<A,B>{
 	pub const fn new(a:A,b:B)->Self{
@@ -394,18 +399,18 @@ impl Pow for i32{
 }
 
 #[derive(Clone,Copy)]
-pub struct Power<A:Copy,B:Copy>(A,B);
-impl<A:Copy,B:Copy> Power<A,B>{
+pub struct Power<A,B>(A,B);
+impl<A,B> Power<A,B>{
 	pub const fn new(a:A,b:B)->Self{
 		Self(a,b)
 	}
 }
-impl<T:Pow<Output=T>,A:Evaluate<T>+Copy,B:Evaluate<T>+Copy> Evaluate<T> for Power<A,B>{
+impl<T:Pow<Output=T>,A:Evaluate<T>,B:Evaluate<T>> Evaluate<T> for Power<A,B>{
 	fn evaluate(&self)->T{
 		self.0.evaluate().pow(self.1.evaluate())
 	}
 }
-impl<T:Pow<Output=T>,A:TryEvaluate<T>+Copy,B:TryEvaluate<T>+Copy> TryEvaluate<T> for Power<A,B>{
+impl<T:Pow<Output=T>,A:TryEvaluate<T>,B:TryEvaluate<T>> TryEvaluate<T> for Power<A,B>{
 	fn try_evaluate(&self,values:&HashMap<UnknownId,T>)->Result<T,TryEvaluateError>{
 		Ok(self.0.try_evaluate(values)?.pow(self.1.try_evaluate(values)?))
 	}
@@ -417,25 +422,25 @@ impl<A:Derivative+Copy,B:Derivative+Copy> Derivative for Power<A,B>{
 	}
 }
 //arithmetic
-impl<A:Copy,B:Copy,C:Copy> std::ops::Add<C> for Power<A,B>{
+impl<A,B,C> std::ops::Add<C> for Power<A,B>{
 	type Output=Plus<Self,C>;
 	fn add(self,c:C)->Self::Output{
 		Plus(self,c)
 	}
 }
-impl<A:Copy,B:Copy,C:Copy> std::ops::Mul<C> for Power<A,B>{
+impl<A,B,C> std::ops::Mul<C> for Power<A,B>{
 	type Output=Times<Self,C>;
 	fn mul(self,c:C)->Self::Output{
 		Times(self,c)
 	}
 }
-impl<A:Copy,B:Copy,C:Copy> std::ops::Sub<C> for Power<A,B>{
+impl<A,B,C> std::ops::Sub<C> for Power<A,B>{
 	type Output=Minus<Self,C>;
 	fn sub(self,c:C)->Self::Output{
 		Minus(self,c)
 	}
 }
-impl<A:Copy,B:Copy,C:Copy> std::ops::Div<C> for Power<A,B>{
+impl<A,B,C> std::ops::Div<C> for Power<A,B>{
 	type Output=Divide<Self,C>;
 	fn div(self,c:C)->Self::Output{
 		Divide(self,c)
@@ -453,6 +458,7 @@ impl Logarithm for f32{
 	}
 }
 
+#[derive(Clone,Copy)]
 pub struct Log<A>(A);
 impl<A> Log<A>{
 	pub const fn new(a:A)->Self{
@@ -512,6 +518,7 @@ impl Expable for f32{
 	}
 }
 
+#[derive(Clone,Copy)]
 pub struct Exp<A>(A);
 impl<A> Exp<A>{
 	pub const fn new(a:A)->Self{
