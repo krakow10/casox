@@ -33,6 +33,37 @@ pub trait Derivative{
 	type Derivative;
 	fn derivative(&self,unknown_id:VariableId)->Self::Derivative;
 }
+#[derive(Eq,PartialEq,Ord,PartialOrd)]
+enum OperationOrder{
+	Add,
+	Sub,
+	Mul,
+	Div,
+	Pow,
+}
+trait Operation{
+	//if this is None it means it's a function or something with its own parentheses / parentheses not applicable
+	fn operation(&self)->Option<OperationOrder>{
+		None
+	}
+}
+trait DisplayExpr:std::fmt::Display+Operation{
+	fn display_expr(&self,f:&mut std::fmt::Formatter<'_>,parent_operation:&Option<OperationOrder>)->std::fmt::Result{
+		let add_parentheses=match (self.operation(),parent_operation){
+			//always use parentheses for powers within powers
+			(Some(OperationOrder::Pow),Some(OperationOrder::Pow))=>true,
+			(Some(op),Some(parent_op))=>match op.cmp(parent_op){
+				std::cmp::Ordering::Less=>true,
+				_=>false,
+			},
+			_=>false,
+		};
+		match add_parentheses{
+			true=>write!(f,"({})",self),
+			false=>write!(f,"{}",self),
+		}
+	}
+}
 
 //f32
 impl Zero for f32{
@@ -63,6 +94,16 @@ pub enum Morph{
 	Zero,
 	Identity,
 }
+impl std::fmt::Display for Morph{
+	fn fmt(&self,f:&mut std::fmt::Formatter<'_>)->std::fmt::Result{
+		match self{
+			Morph::Zero=>write!(f,"0"),
+			Morph::Identity=>write!(f,"1"),
+		}
+	}
+}
+impl Operation for Morph{}
+impl DisplayExpr for Morph{}
 impl<T:Zero+Identity> Evaluate<T> for Morph{
 	fn evaluate(&self)->T{
 		match self{
@@ -102,6 +143,13 @@ impl VariableId{
 		Self(value)
 	}
 }
+impl std::fmt::Display for VariableId{
+	fn fmt(&self,f:&mut std::fmt::Formatter<'_>)->std::fmt::Result{
+		write!(f,"variable(#{})",self.0)
+	}
+}
+impl Operation for VariableId{}
+impl DisplayExpr for VariableId{}
 impl<T:Copy> TryEvaluate<T> for VariableId{
 	fn try_evaluate(&self,values:&HashMap<VariableId,T>)->Result<T,TryEvaluateError>{
 		values.get(self).copied().ok_or(TryEvaluateError::MissingUnknown(*self))
@@ -153,6 +201,13 @@ impl<T> Constant<T>{
 pub const fn constant<A>(a:A)->Constant<A>{
 	Constant::new(a)
 }
+impl<T:std::fmt::Display> std::fmt::Display for Constant<T>{
+	fn fmt(&self,f:&mut std::fmt::Formatter<'_>)->std::fmt::Result{
+		write!(f,"{}",self.0)
+	}
+}
+impl<T> Operation for Constant<T>{}
+impl<T:std::fmt::Display> DisplayExpr for Constant<T>{}
 impl<T:Copy> Evaluate<T> for Constant<T>{
 	fn evaluate(&self)->T{
 		self.0
@@ -212,6 +267,20 @@ impl<A,B> Plus<A,B>{
 		Self(a,b)
 	}
 }
+impl<A:DisplayExpr,B:DisplayExpr> std::fmt::Display for Plus<A,B>{
+	fn fmt(&self,f:&mut std::fmt::Formatter<'_>)->std::fmt::Result{
+		let op=self.operation();
+		self.0.display_expr(f,&op)?;
+		write!(f,"+")?;
+		self.1.display_expr(f,&op)
+	}
+}
+impl<A,B> Operation for Plus<A,B>{
+	fn operation(&self)->Option<OperationOrder>{
+		Some(OperationOrder::Add)
+	}
+}
+impl<A:DisplayExpr,B:DisplayExpr> DisplayExpr for Plus<A,B>{}
 impl<T:std::ops::Add<Output=T>,A:Evaluate<T>,B:Evaluate<T>> Evaluate<T> for Plus<A,B>{
 	fn evaluate(&self)->T{
 		self.0.evaluate()+self.1.evaluate()
@@ -261,6 +330,20 @@ impl<A,B> Minus<A,B>{
 		Self(a,b)
 	}
 }
+impl<A:DisplayExpr,B:DisplayExpr> std::fmt::Display for Minus<A,B>{
+	fn fmt(&self,f:&mut std::fmt::Formatter<'_>)->std::fmt::Result{
+		let op=self.operation();
+		self.0.display_expr(f,&op)?;
+		write!(f,"-")?;
+		self.1.display_expr(f,&op)
+	}
+}
+impl<A,B> Operation for Minus<A,B>{
+	fn operation(&self)->Option<OperationOrder>{
+		Some(OperationOrder::Sub)
+	}
+}
+impl<A:DisplayExpr,B:DisplayExpr> DisplayExpr for Minus<A,B>{}
 impl<T:std::ops::Sub<Output=T>,A:Evaluate<T>,B:Evaluate<T>> Evaluate<T> for Minus<A,B>{
 	fn evaluate(&self)->T{
 		self.0.evaluate()-self.1.evaluate()
@@ -310,6 +393,20 @@ impl<A,B> Times<A,B>{
 		Self(a,b)
 	}
 }
+impl<A:DisplayExpr,B:DisplayExpr> std::fmt::Display for Times<A,B>{
+	fn fmt(&self,f:&mut std::fmt::Formatter<'_>)->std::fmt::Result{
+		let op=self.operation();
+		self.0.display_expr(f,&op)?;
+		write!(f,"*")?;
+		self.1.display_expr(f,&op)
+	}
+}
+impl<A,B> Operation for Times<A,B>{
+	fn operation(&self)->Option<OperationOrder>{
+		Some(OperationOrder::Mul)
+	}
+}
+impl<A:DisplayExpr,B:DisplayExpr> DisplayExpr for Times<A,B>{}
 impl<T:std::ops::Mul<Output=T>,A:Evaluate<T>,B:Evaluate<T>> Evaluate<T> for Times<A,B>{
 	fn evaluate(&self)->T{
 		self.0.evaluate()*self.1.evaluate()
@@ -362,6 +459,20 @@ impl<A,B> Divide<A,B>{
 		Self(a,b)
 	}
 }
+impl<A:DisplayExpr,B:DisplayExpr> std::fmt::Display for Divide<A,B>{
+	fn fmt(&self,f:&mut std::fmt::Formatter<'_>)->std::fmt::Result{
+		let op=self.operation();
+		self.0.display_expr(f,&op)?;
+		write!(f,"/")?;
+		self.1.display_expr(f,&op)
+	}
+}
+impl<A,B> Operation for Divide<A,B>{
+	fn operation(&self)->Option<OperationOrder>{
+		Some(OperationOrder::Div)
+	}
+}
+impl<A:DisplayExpr,B:DisplayExpr> DisplayExpr for Divide<A,B>{}
 impl<T:std::ops::Div<Output=T>,A:Evaluate<T>,B:Evaluate<T>> Evaluate<T> for Divide<A,B>{
 	fn evaluate(&self)->T{
 		self.0.evaluate()/self.1.evaluate()
@@ -431,6 +542,20 @@ impl<A,B> Power<A,B>{
 pub const fn pow<A,B>(a:A,b:B)->Power<A,B>{
 	Power::new(a,b)
 }
+impl<A:DisplayExpr,B:DisplayExpr> std::fmt::Display for Power<A,B>{
+	fn fmt(&self,f:&mut std::fmt::Formatter<'_>)->std::fmt::Result{
+		let op=self.operation();
+		self.0.display_expr(f,&op)?;
+		write!(f,"^")?;
+		self.1.display_expr(f,&op)
+	}
+}
+impl<A,B> Operation for Power<A,B>{
+	fn operation(&self)->Option<OperationOrder>{
+		Some(OperationOrder::Pow)
+	}
+}
+impl<A:DisplayExpr,B:DisplayExpr> DisplayExpr for Power<A,B>{}
 impl<T:Pow<Output=T>,A:Evaluate<T>,B:Evaluate<T>> Evaluate<T> for Power<A,B>{
 	fn evaluate(&self)->T{
 		self.0.evaluate().pow(self.1.evaluate())
@@ -494,6 +619,15 @@ impl<A> Log<A>{
 pub const fn log<A>(a:A)->Log<A>{
 	Log::new(a)
 }
+impl<A:DisplayExpr> std::fmt::Display for Log<A>{
+	fn fmt(&self,f:&mut std::fmt::Formatter<'_>)->std::fmt::Result{
+		write!(f,"log(")?;
+		self.0.display_expr(f,&self.operation())?;
+		write!(f,")")
+	}
+}
+impl<A> Operation for Log<A>{}
+impl<A:DisplayExpr> DisplayExpr for Log<A>{}
 impl<T:Logarithm<Output=T>,A:Evaluate<T>> Evaluate<T> for Log<A>{
 	fn evaluate(&self)->T{
 		self.0.evaluate().log()
@@ -557,6 +691,15 @@ impl<A> Exp<A>{
 pub const fn exp<A>(a:A)->Exp<A>{
 	Exp::new(a)
 }
+impl<A:DisplayExpr> std::fmt::Display for Exp<A>{
+	fn fmt(&self,f:&mut std::fmt::Formatter<'_>)->std::fmt::Result{
+		write!(f,"exp(")?;
+		self.0.display_expr(f,&self.operation())?;
+		write!(f,")")
+	}
+}
+impl<A> Operation for Exp<A>{}
+impl<A:DisplayExpr> DisplayExpr for Exp<A>{}
 impl<T:Expable<Output=T>,A:Evaluate<T>> Evaluate<T> for Exp<A>{
 	fn evaluate(&self)->T{
 		self.0.evaluate().exp()
