@@ -6,7 +6,7 @@ Casox Computer Algebra System
 ## Example
 ```rust
 use std::collections::HashMap;
-use casox::core::{pow,VariableGenerator,TryEvaluate,Derivative};
+use casox::core::{pow,VariableGenerator,TryReplace,Evaluate,Derivative};
 
 //Generate some varables using VariableGenerator utility
 let mut gen=VariableGenerator::new();
@@ -24,11 +24,11 @@ let mut env=HashMap::new();
 env.insert(x,3.0);//x=3.0
 env.insert(y,5.0);//y=5.0
 
-//try evaluate will fail if all variables in the expression are not filled
-assert_eq!(expr.try_evaluate(&env).unwrap(),261.0);
+//try_replace will fail if any variable in the expression has no definition
+assert_eq!(expr.try_replace(&env).unwrap().evaluate(),261.0);
 
 //derivative with respect to x, then evaluate with the same environment
-assert_eq!(expr.derivative(x).try_evaluate(&env).unwrap(),411.0);
+assert_eq!(expr.derivative(x).try_replace(&env).unwrap().evaluate(),411.0);
 ```
 
 #### License

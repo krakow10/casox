@@ -19,7 +19,7 @@ mod tests{
 		let sum=Constant::new(2)+x;
 		let mut environment=HashMap::new();
 		environment.insert(x,1);
-		assert_eq!(sum.try_evaluate(&environment).unwrap(),3);
+		assert_eq!(sum.try_replace(&environment).unwrap().evaluate(),3);
 		assert_eq!(sum.derivative(x).evaluate(),1);
 	}
 	#[test]
@@ -31,9 +31,9 @@ mod tests{
 		let mut environment=HashMap::new();
 		environment.insert(x,3.0);//x=3.0
 		environment.insert(y,5.0);//y=5.0
-		assert_eq!(expr.try_evaluate(&environment).unwrap(),261.0);
-		assert_eq!(expr.derivative(x).try_evaluate(&environment).unwrap(),411.0);
-		assert_eq!(expr.derivative(y).derivative(x).try_evaluate(&environment).unwrap(),1174.938);
-		assert_eq!(expr.derivative(x).derivative(x).derivative(x).try_evaluate(&environment).unwrap(),540.0);
+		assert_eq!(expr.try_replace(&environment).unwrap().evaluate(),261.0);
+		assert_eq!(expr.derivative(x).try_replace(&environment).unwrap().evaluate(),411.0);
+		assert_eq!(expr.derivative(y).derivative(x).try_replace(&environment).unwrap().evaluate(),1174.938);
+		assert_eq!(expr.derivative(x).derivative(x).derivative(x).try_replace(&environment).unwrap().evaluate(),540.0);
 	}
 }

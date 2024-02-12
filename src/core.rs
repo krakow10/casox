@@ -10,29 +10,28 @@ pub trait Identity{
 pub trait Evaluate<T>{
 	fn evaluate(&self)->T;
 }
+
 #[derive(Debug)]
-pub enum TryEvaluateError{
+pub enum TryReplaceError{
 	MissingUnknown(VariableId),
 }
-impl std::fmt::Display for TryEvaluateError{
+impl std::fmt::Display for TryReplaceError{
 	fn fmt(&self,state:&mut std::fmt::Formatter<'_>)->std::fmt::Result{
 		write!(state,"{self:?}")
 	}
 }
-impl std::error::Error for TryEvaluateError{}
-pub trait TryEvaluate<T>{
-	fn try_evaluate(&self,values:&HashMap<VariableId,T>)->Result<T,TryEvaluateError>;
+impl std::error::Error for TryReplaceError{}
+/// Replaces VariableId with Constant<T>.  If any variable is missing a replacement, it fails.
+pub trait TryReplace<T>{
+	type Output;
+	fn try_replace(&self,values:&HashMap<VariableId,T>)->Result<Self::Output,TryReplaceError>;
 }
-//TODO: implement TryEvaluate implicitly if the type implements Evaluate
-// impl<T,Eval:Evaluate<T>> TryEvaluate<T> for Eval{
-// 	fn try_evaluate(&self,_values:&HashMap<UnknownId,T>)->Result<T,TryEvaluateError>{
-// 		Ok(self.evaluate())
-// 	}
-// }
+
 pub trait Derivative{
 	type Derivative;
 	fn derivative(&self,unknown_id:VariableId)->Self::Derivative;
 }
+
 #[derive(Eq,PartialEq,Ord,PartialOrd)]
 enum OperationOrder{
 	Add,
@@ -112,9 +111,10 @@ impl<T:Zero+Identity> Evaluate<T> for Morph{
 		}
 	}
 }
-impl<T:Zero+Identity> TryEvaluate<T> for Morph{
-	fn try_evaluate(&self,_values:&HashMap<VariableId,T>)->Result<T,TryEvaluateError>{
-		Ok(self.evaluate())
+impl<T> TryReplace<T> for Morph{
+	type Output=Self;
+	fn try_replace(&self,_values:&HashMap<VariableId,T>)->Result<Self::Output,TryReplaceError>{
+		Ok(*self)
 	}
 }
 impl Derivative for Morph{
@@ -150,9 +150,10 @@ impl std::fmt::Display for VariableId{
 }
 impl Operation for VariableId{}
 impl DisplayExpr for VariableId{}
-impl<T:Copy> TryEvaluate<T> for VariableId{
-	fn try_evaluate(&self,values:&HashMap<VariableId,T>)->Result<T,TryEvaluateError>{
-		values.get(self).copied().ok_or(TryEvaluateError::MissingUnknown(*self))
+impl<T:Copy> TryReplace<T> for VariableId{
+	type Output=Constant<T>;
+	fn try_replace(&self,values:&HashMap<VariableId,T>)->Result<Self::Output,TryReplaceError>{
+		values.get(self).copied().map(Constant::new).ok_or(TryReplaceError::MissingUnknown(*self))
 	}
 }
 impl Derivative for VariableId{
@@ -213,10 +214,10 @@ impl<T:Copy> Evaluate<T> for Constant<T>{
 		self.0
 	}
 }
-//TODO: make this implicit
-impl<T:Copy> TryEvaluate<T> for Constant<T>{
-	fn try_evaluate(&self,_values:&HashMap<VariableId,T>)->Result<T,TryEvaluateError>{
-		Ok(self.evaluate())
+impl<T:Copy> TryReplace<T> for Constant<T>{
+	type Output=Self;
+	fn try_replace(&self,_values:&HashMap<VariableId,T>)->Result<Self::Output,TryReplaceError>{
+		Ok(*self)
 	}
 }
 impl<T:Zero> Derivative for Constant<T>{
@@ -286,9 +287,11 @@ impl<T:std::ops::Add<Output=T>,A:Evaluate<T>,B:Evaluate<T>> Evaluate<T> for Plus
 		self.0.evaluate()+self.1.evaluate()
 	}
 }
-impl<T:std::ops::Add<Output=T>,A:TryEvaluate<T>,B:TryEvaluate<T>> TryEvaluate<T> for Plus<A,B>{
-	fn try_evaluate(&self,values:&HashMap<VariableId,T>)->Result<T,TryEvaluateError>{
-		Ok(self.0.try_evaluate(values)?+self.1.try_evaluate(values)?)
+impl<T,A:TryReplace<T>,B:TryReplace<T>> TryReplace<T> for Plus<A,B>{
+	//wtf did I just write
+	type Output=Plus<<A as TryReplace<T>>::Output,<B as TryReplace<T>>::Output>;
+	fn try_replace(&self,values:&HashMap<VariableId,T>)->Result<Self::Output,TryReplaceError>{
+		Ok(Plus(self.0.try_replace(values)?,self.1.try_replace(values)?))
 	}
 }
 impl<A:Derivative,B:Derivative> Derivative for Plus<A,B>{
@@ -349,9 +352,10 @@ impl<T:std::ops::Sub<Output=T>,A:Evaluate<T>,B:Evaluate<T>> Evaluate<T> for Minu
 		self.0.evaluate()-self.1.evaluate()
 	}
 }
-impl<T:std::ops::Sub<Output=T>,A:TryEvaluate<T>,B:TryEvaluate<T>> TryEvaluate<T> for Minus<A,B>{
-	fn try_evaluate(&self,values:&HashMap<VariableId,T>)->Result<T,TryEvaluateError>{
-		Ok(self.0.try_evaluate(values)?-self.1.try_evaluate(values)?)
+impl<T,A:TryReplace<T>,B:TryReplace<T>> TryReplace<T> for Minus<A,B>{
+	type Output=Minus<<A as TryReplace<T>>::Output,<B as TryReplace<T>>::Output>;
+	fn try_replace(&self,values:&HashMap<VariableId,T>)->Result<Self::Output,TryReplaceError>{
+		Ok(Minus(self.0.try_replace(values)?,self.1.try_replace(values)?))
 	}
 }
 impl<A:Derivative,B:Derivative> Derivative for Minus<A,B>{
@@ -412,9 +416,10 @@ impl<T:std::ops::Mul<Output=T>,A:Evaluate<T>,B:Evaluate<T>> Evaluate<T> for Time
 		self.0.evaluate()*self.1.evaluate()
 	}
 }
-impl<T:std::ops::Mul<Output=T>,A:TryEvaluate<T>,B:TryEvaluate<T>> TryEvaluate<T> for Times<A,B>{
-	fn try_evaluate(&self,values:&HashMap<VariableId,T>)->Result<T,TryEvaluateError>{
-		Ok(self.0.try_evaluate(values)?*self.1.try_evaluate(values)?)
+impl<T,A:TryReplace<T>,B:TryReplace<T>> TryReplace<T> for Times<A,B>{
+	type Output=Times<<A as TryReplace<T>>::Output,<B as TryReplace<T>>::Output>;
+	fn try_replace(&self,values:&HashMap<VariableId,T>)->Result<Self::Output,TryReplaceError>{
+		Ok(Times(self.0.try_replace(values)?,self.1.try_replace(values)?))
 	}
 }
 impl<A:Derivative+Copy,B:Derivative+Copy> Derivative for Times<A,B>{
@@ -478,9 +483,10 @@ impl<T:std::ops::Div<Output=T>,A:Evaluate<T>,B:Evaluate<T>> Evaluate<T> for Divi
 		self.0.evaluate()/self.1.evaluate()
 	}
 }
-impl<T:std::ops::Div<Output=T>,A:TryEvaluate<T>,B:TryEvaluate<T>> TryEvaluate<T> for Divide<A,B>{
-	fn try_evaluate(&self,values:&HashMap<VariableId,T>)->Result<T,TryEvaluateError>{
-		Ok(self.0.try_evaluate(values)?/self.1.try_evaluate(values)?)
+impl<T,A:TryReplace<T>,B:TryReplace<T>> TryReplace<T> for Divide<A,B>{
+	type Output=Divide<<A as TryReplace<T>>::Output,<B as TryReplace<T>>::Output>;
+	fn try_replace(&self,values:&HashMap<VariableId,T>)->Result<Self::Output,TryReplaceError>{
+		Ok(Divide(self.0.try_replace(values)?,self.1.try_replace(values)?))
 	}
 }
 impl<A:Derivative+Copy,B:Derivative+Copy> Derivative for Divide<A,B>{
@@ -561,9 +567,10 @@ impl<T:Pow<Output=T>,A:Evaluate<T>,B:Evaluate<T>> Evaluate<T> for Power<A,B>{
 		self.0.evaluate().pow(self.1.evaluate())
 	}
 }
-impl<T:Pow<Output=T>,A:TryEvaluate<T>,B:TryEvaluate<T>> TryEvaluate<T> for Power<A,B>{
-	fn try_evaluate(&self,values:&HashMap<VariableId,T>)->Result<T,TryEvaluateError>{
-		Ok(self.0.try_evaluate(values)?.pow(self.1.try_evaluate(values)?))
+impl<T,A:TryReplace<T>,B:TryReplace<T>> TryReplace<T> for Power<A,B>{
+	type Output=Power<<A as TryReplace<T>>::Output,<B as TryReplace<T>>::Output>;
+	fn try_replace(&self,values:&HashMap<VariableId,T>)->Result<Self::Output,TryReplaceError>{
+		Ok(Power(self.0.try_replace(values)?,self.1.try_replace(values)?))
 	}
 }
 impl<A:Derivative+Copy,B:Derivative+Copy> Derivative for Power<A,B>{
@@ -633,9 +640,10 @@ impl<T:Logarithm<Output=T>,A:Evaluate<T>> Evaluate<T> for Log<A>{
 		self.0.evaluate().log()
 	}
 }
-impl<T:Logarithm<Output=T>,A:TryEvaluate<T>> TryEvaluate<T> for Log<A>{
-	fn try_evaluate(&self,values:&HashMap<VariableId,T>)->Result<T,TryEvaluateError>{
-		Ok(self.0.try_evaluate(values)?.log())
+impl<T,A:TryReplace<T>> TryReplace<T> for Log<A>{
+	type Output=Log<<A as TryReplace<T>>::Output>;
+	fn try_replace(&self,values:&HashMap<VariableId,T>)->Result<Self::Output,TryReplaceError>{
+		Ok(Log(self.0.try_replace(values)?))
 	}
 }
 impl<A:Derivative+Copy> Derivative for Log<A>{
@@ -705,9 +713,10 @@ impl<T:Expable<Output=T>,A:Evaluate<T>> Evaluate<T> for Exp<A>{
 		self.0.evaluate().exp()
 	}
 }
-impl<T:Expable<Output=T>,A:TryEvaluate<T>> TryEvaluate<T> for Exp<A>{
-	fn try_evaluate(&self,values:&HashMap<VariableId,T>)->Result<T,TryEvaluateError>{
-		Ok(self.0.try_evaluate(values)?.exp())
+impl<T,A:TryReplace<T>> TryReplace<T> for Exp<A>{
+	type Output=Exp<<A as TryReplace<T>>::Output>;
+	fn try_replace(&self,values:&HashMap<VariableId,T>)->Result<Self::Output,TryReplaceError>{
+		Ok(Exp(self.0.try_replace(values)?))
 	}
 }
 impl<A:Derivative+Copy> Derivative for Exp<A>{
