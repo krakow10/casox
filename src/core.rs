@@ -61,6 +61,7 @@ impl Identity for i32{
 }
 
 //turns into the respective typed value during evaluation
+#[derive(Clone,Copy)]
 pub enum Morph{
 	Zero,
 	Identity,
@@ -71,6 +72,17 @@ impl<T:Zero+Identity> Evaluate<T> for Morph{
 			Morph::Zero=>T::zero(),
 			Morph::Identity=>T::identity(),
 		}
+	}
+}
+impl<T:Zero+Identity> TryEvaluate<T> for Morph{
+	fn try_evaluate(&self,_values:&HashMap<VariableId,T>)->Result<T,TryEvaluateError>{
+		Ok(self.evaluate())
+	}
+}
+impl Derivative for Morph{
+	type Derivative=Morph;
+	fn derivative(&self,_unknown_id:VariableId)->Self::Derivative{
+		Morph::Zero
 	}
 }
 
