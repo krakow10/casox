@@ -83,14 +83,6 @@ impl Derivative for Morph{
 	}
 }
 
-//represents an unknown value.  gains the type of the current evaluation.
-#[derive(Clone,Copy,Debug,Hash,Eq,PartialEq)]
-pub struct VariableId(u32);
-impl VariableId{
-	pub const fn new(value:u32)->Self{
-		Self(value)
-	}
-}
 pub struct VariableGenerator(u32);
 impl VariableGenerator{
 	pub const fn new()->Self{
@@ -100,6 +92,14 @@ impl VariableGenerator{
 		let variable=VariableId::new(self.0);
 		self.0+=1;
 		variable
+	}
+}
+//represents an unknown value.  gains the type of the current evaluation.
+#[derive(Clone,Copy,Debug,Hash,Eq,PartialEq)]
+pub struct VariableId(u32);
+impl VariableId{
+	pub const fn new(value:u32)->Self{
+		Self(value)
 	}
 }
 impl<T:Copy> TryEvaluate<T> for VariableId{
