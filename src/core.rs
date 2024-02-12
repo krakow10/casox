@@ -94,6 +94,17 @@ impl VariableId{
 		Self(value)
 	}
 }
+pub struct VariableGenerator(u32);
+impl VariableGenerator{
+	pub const fn new()->Self{
+		Self(0)
+	}
+	pub fn var(&mut self)->VariableId{
+		let variable=VariableId::new(self.0);
+		self.0+=1;
+		variable
+	}
+}
 impl<T:Copy> TryEvaluate<T> for VariableId{
 	fn try_evaluate(&self,values:&HashMap<VariableId,T>)->Result<T,TryEvaluateError>{
 		values.get(self).copied().ok_or(TryEvaluateError::MissingUnknown(*self))
@@ -141,6 +152,9 @@ impl<T> Constant<T>{
 	pub const fn new(value:T)->Self{
 		Self(value)
 	}
+}
+pub const fn constant<A>(a:A)->Constant<A>{
+	Constant::new(a)
 }
 impl<T:Copy> Evaluate<T> for Constant<T>{
 	fn evaluate(&self)->T{
@@ -417,6 +431,9 @@ impl<A,B> Power<A,B>{
 		Self(a,b)
 	}
 }
+pub const fn pow<A,B>(a:A,b:B)->Power<A,B>{
+	Power::new(a,b)
+}
 impl<T:Pow<Output=T>,A:Evaluate<T>,B:Evaluate<T>> Evaluate<T> for Power<A,B>{
 	fn evaluate(&self)->T{
 		self.0.evaluate().pow(self.1.evaluate())
@@ -477,6 +494,9 @@ impl<A> Log<A>{
 		Self(a)
 	}
 }
+pub const fn log<A>(a:A)->Log<A>{
+	Log::new(a)
+}
 impl<T:Logarithm<Output=T>,A:Evaluate<T>> Evaluate<T> for Log<A>{
 	fn evaluate(&self)->T{
 		self.0.evaluate().log()
@@ -536,6 +556,9 @@ impl<A> Exp<A>{
 	pub const fn new(a:A)->Self{
 		Self(a)
 	}
+}
+pub const fn exp<A>(a:A)->Exp<A>{
+	Exp::new(a)
 }
 impl<T:Expable<Output=T>,A:Evaluate<T>> Evaluate<T> for Exp<A>{
 	fn evaluate(&self)->T{
