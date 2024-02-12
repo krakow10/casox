@@ -33,5 +33,7 @@ mod tests{
 		environment.insert(y,5.0);//y=5.0
 		assert_eq!(expr.try_evaluate(&environment).unwrap(),261.0);
 		assert_eq!(expr.derivative(x).try_evaluate(&environment).unwrap(),411.0);
+		assert_eq!(expr.derivative(y).derivative(x).try_evaluate(&environment).unwrap(),1174.938);
+		assert_eq!(expr.derivative(x).derivative(x).derivative(x).try_evaluate(&environment).unwrap(),540.0);
 	}
 }
