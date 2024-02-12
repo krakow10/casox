@@ -97,6 +97,31 @@ impl Derivative for UnknownId{
 		}
 	}
 }
+//TODO: generalize arithmetic
+impl<C> std::ops::Add<C> for UnknownId{
+	type Output=Plus<Self,C>;
+	fn add(self,c:C)->Self::Output{
+		Plus(self,c)
+	}
+}
+impl<C> std::ops::Mul<C> for UnknownId{
+	type Output=Times<Self,C>;
+	fn mul(self,c:C)->Self::Output{
+		Times(self,c)
+	}
+}
+impl<C> std::ops::Sub<C> for UnknownId{
+	type Output=Minus<Self,C>;
+	fn sub(self,c:C)->Self::Output{
+		Minus(self,c)
+	}
+}
+impl<C> std::ops::Div<C> for UnknownId{
+	type Output=Divide<Self,C>;
+	fn div(self,c:C)->Self::Output{
+		Divide(self,c)
+	}
+}
 
 pub struct Scalar<T>(T);
 impl<T> Scalar<T>{
@@ -123,16 +148,28 @@ impl<T:Zero> Derivative for Scalar<T>{
 }
 //TODO: generalize arithmetic
 //use macros?
-impl<T,B> std::ops::Add<B> for Scalar<T>{
-	type Output=Plus<Self,B>;
-	fn add(self,b:B)->Self::Output{
-		Plus(self,b)
+impl<A,C> std::ops::Add<C> for Scalar<A>{
+	type Output=Plus<Self,C>;
+	fn add(self,c:C)->Self::Output{
+		Plus(self,c)
 	}
 }
-impl<T,B> std::ops::Mul<B> for Scalar<T>{
-	type Output=Times<Self,B>;
-	fn mul(self,b:B)->Self::Output{
-		Times(self,b)
+impl<A,C> std::ops::Mul<C> for Scalar<A>{
+	type Output=Times<Self,C>;
+	fn mul(self,c:C)->Self::Output{
+		Times(self,c)
+	}
+}
+impl<A,C> std::ops::Sub<C> for Scalar<A>{
+	type Output=Minus<Self,C>;
+	fn sub(self,c:C)->Self::Output{
+		Minus(self,c)
+	}
+}
+impl<A,C> std::ops::Div<C> for Scalar<A>{
+	type Output=Divide<Self,C>;
+	fn div(self,c:C)->Self::Output{
+		Divide(self,c)
 	}
 }
 
@@ -179,6 +216,18 @@ impl<A,B,C> std::ops::Mul<C> for Plus<A,B>{
 		Times(self,c)
 	}
 }
+impl<A,B,C> std::ops::Sub<C> for Plus<A,B>{
+	type Output=Minus<Self,C>;
+	fn sub(self,c:C)->Self::Output{
+		Minus(self,c)
+	}
+}
+impl<A,B,C> std::ops::Div<C> for Plus<A,B>{
+	type Output=Divide<Self,C>;
+	fn div(self,c:C)->Self::Output{
+		Divide(self,c)
+	}
+}
 
 pub struct Minus<A,B>(A,B);
 impl<A,B> Minus<A,B>{
@@ -213,6 +262,18 @@ impl<A,B,C> std::ops::Mul<C> for Minus<A,B>{
 	type Output=Times<Self,C>;
 	fn mul(self,c:C)->Self::Output{
 		Times(self,c)
+	}
+}
+impl<A,B,C> std::ops::Sub<C> for Minus<A,B>{
+	type Output=Minus<Self,C>;
+	fn sub(self,c:C)->Self::Output{
+		Minus(self,c)
+	}
+}
+impl<A,B,C> std::ops::Div<C> for Minus<A,B>{
+	type Output=Divide<Self,C>;
+	fn div(self,c:C)->Self::Output{
+		Divide(self,c)
 	}
 }
 
@@ -254,6 +315,18 @@ impl<A,B,C> std::ops::Mul<C> for Times<A,B>{
 		Times(self,c)
 	}
 }
+impl<A,B,C> std::ops::Sub<C> for Times<A,B>{
+	type Output=Minus<Self,C>;
+	fn sub(self,c:C)->Self::Output{
+		Minus(self,c)
+	}
+}
+impl<A,B,C> std::ops::Div<C> for Times<A,B>{
+	type Output=Divide<Self,C>;
+	fn div(self,c:C)->Self::Output{
+		Divide(self,c)
+	}
+}
 
 pub struct Divide<A,B>(A,B);
 impl<A,B> Divide<A,B>{
@@ -288,6 +361,18 @@ impl<A,B,C> std::ops::Mul<C> for Divide<A,B>{
 	type Output=Times<Self,C>;
 	fn mul(self,c:C)->Self::Output{
 		Times(self,c)
+	}
+}
+impl<A,B,C> std::ops::Sub<C> for Divide<A,B>{
+	type Output=Minus<Self,C>;
+	fn sub(self,c:C)->Self::Output{
+		Minus(self,c)
+	}
+}
+impl<A,B,C> std::ops::Div<C> for Divide<A,B>{
+	type Output=Divide<A,Times<B,C>>;
+	fn div(self,c:C)->Self::Output{
+		Divide(self.0,Times(self.1,c))
 	}
 }
 
@@ -344,6 +429,18 @@ impl<A:Copy,B:Copy,C:Copy> std::ops::Mul<C> for Power<A,B>{
 		Times(self,c)
 	}
 }
+impl<A:Copy,B:Copy,C:Copy> std::ops::Sub<C> for Power<A,B>{
+	type Output=Minus<Self,C>;
+	fn sub(self,c:C)->Self::Output{
+		Minus(self,c)
+	}
+}
+impl<A:Copy,B:Copy,C:Copy> std::ops::Div<C> for Power<A,B>{
+	type Output=Divide<Self,C>;
+	fn div(self,c:C)->Self::Output{
+		Divide(self,c)
+	}
+}
 
 pub trait Logarithm{
 	type Output;
@@ -391,6 +488,18 @@ impl<A,C> std::ops::Mul<C> for Log<A>{
 		Times(self,c)
 	}
 }
+impl<A,C> std::ops::Sub<C> for Log<A>{
+	type Output=Minus<Self,C>;
+	fn sub(self,c:C)->Self::Output{
+		Minus(self,c)
+	}
+}
+impl<A,C> std::ops::Div<C> for Log<A>{
+	type Output=Divide<Self,C>;
+	fn div(self,c:C)->Self::Output{
+		Divide(self,c)
+	}
+}
 
 pub trait Expable{
 	type Output;
@@ -436,5 +545,17 @@ impl<A,C> std::ops::Mul<C> for Exp<A>{
 	type Output=Times<Self,C>;
 	fn mul(self,c:C)->Self::Output{
 		Times(self,c)
+	}
+}
+impl<A,C> std::ops::Sub<C> for Exp<A>{
+	type Output=Minus<Self,C>;
+	fn sub(self,c:C)->Self::Output{
+		Minus(self,c)
+	}
+}
+impl<A,C> std::ops::Div<C> for Exp<A>{
+	type Output=Divide<Self,C>;
+	fn div(self,c:C)->Self::Output{
+		Divide(self,c)
 	}
 }
