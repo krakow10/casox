@@ -124,24 +124,24 @@ impl<C> std::ops::Div<C> for UnknownId{
 }
 
 #[derive(Clone,Copy)]
-pub struct Scalar<T>(T);
-impl<T> Scalar<T>{
+pub struct Constant<T>(T);
+impl<T> Constant<T>{
 	pub const fn new(value:T)->Self{
 		Self(value)
 	}
 }
-impl<T:Copy> Evaluate<T> for Scalar<T>{
+impl<T:Copy> Evaluate<T> for Constant<T>{
 	fn evaluate(&self)->T{
 		self.0
 	}
 }
 //TODO: make this implicit
-impl<T:Copy> TryEvaluate<T> for Scalar<T>{
+impl<T:Copy> TryEvaluate<T> for Constant<T>{
 	fn try_evaluate(&self,_values:&HashMap<UnknownId,T>)->Result<T,TryEvaluateError>{
 		Ok(self.evaluate())
 	}
 }
-impl<T:Zero> Derivative for Scalar<T>{
+impl<T:Zero> Derivative for Constant<T>{
 	type Derivative=Self;
 	fn derivative(&self,_unknown_id:UnknownId)->Self::Derivative{
 		Self(T::zero())
@@ -149,25 +149,25 @@ impl<T:Zero> Derivative for Scalar<T>{
 }
 //TODO: generalize arithmetic
 //use macros?
-impl<A,C> std::ops::Add<C> for Scalar<A>{
+impl<A,C> std::ops::Add<C> for Constant<A>{
 	type Output=Plus<Self,C>;
 	fn add(self,c:C)->Self::Output{
 		Plus(self,c)
 	}
 }
-impl<A,C> std::ops::Mul<C> for Scalar<A>{
+impl<A,C> std::ops::Mul<C> for Constant<A>{
 	type Output=Times<Self,C>;
 	fn mul(self,c:C)->Self::Output{
 		Times(self,c)
 	}
 }
-impl<A,C> std::ops::Sub<C> for Scalar<A>{
+impl<A,C> std::ops::Sub<C> for Constant<A>{
 	type Output=Minus<Self,C>;
 	fn sub(self,c:C)->Self::Output{
 		Minus(self,c)
 	}
 }
-impl<A,C> std::ops::Div<C> for Scalar<A>{
+impl<A,C> std::ops::Div<C> for Constant<A>{
 	type Output=Divide<Self,C>;
 	fn div(self,c:C)->Self::Output{
 		Divide(self,c)
