@@ -36,4 +36,17 @@ mod tests{
 		assert_eq!(expr.derivative(y).derivative(x).try_replace(&env).unwrap().evaluate(),1174.938);
 		assert_eq!(expr.derivative(x).derivative(x).derivative(x).try_replace(&env).unwrap().evaluate(),540.0);
 	}
+	#[test]
+	fn display(){
+		let mut gen=VariableGenerator::new();
+		let x=gen.var();
+		let y=gen.var();
+		let _1=Constant::new("1");
+		let _2=Constant::new("2");
+		let expr=x+y*(x+_1)+pow(pow(x,_2),y)+log(x);
+		let mut env=HashMap::new();
+		env.insert(x,"x");
+		env.insert(y,"y");
+		assert_eq!(format!("{}",expr.try_replace(&env).unwrap()),"x+y*(x+1)+(x^2)^y+log(x)");
+	}
 }
