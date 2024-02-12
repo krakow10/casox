@@ -6,9 +6,6 @@ pub trait Zero{
 pub trait Identity{
 	fn identity()->Self;
 }
-pub trait Unit{
-	fn unit(&self)->Self;
-}
 
 pub trait Evaluate<T>{
 	fn evaluate(&self)->T;
