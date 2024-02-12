@@ -29,6 +29,21 @@ assert_eq!(expr.try_replace(&env).unwrap().evaluate(),261.0);
 
 //derivative with respect to x, then evaluate with the same environment
 assert_eq!(expr.derivative(x).try_replace(&env).unwrap().evaluate(),411.0);
+
+//create a new environment for display
+let mut env2=HashMap::new();
+env2.insert(x,"x");
+env2.insert(y,"y");
+
+//display the expression using the inner type's (str) Display trait implementation
+//this will compile even if the Constant types do not match, where as
+//.evaluate() will not compile unless mismatched types are wrapped in an
+//expression that hides the inner type such as vector dot product
+//which could hide vector types inside it by returning a fixed scalar type
+assert_eq!(
+	format!("{}",expr.derivative(x).try_replace(&env2).unwrap()),
+	"1+y*1+0*x+x^y*((y*1)/x+log(x)*0)"
+);
 ```
 
 #### License
