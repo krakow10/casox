@@ -78,7 +78,7 @@ impl<T:Zero+Identity> Evaluate<T> for Morph{
 #[derive(Clone,Copy,Debug,Hash,Eq,PartialEq)]
 pub struct UnknownId(u32);
 impl UnknownId{
-	pub fn new(value:u32)->Self{
+	pub const fn new(value:u32)->Self{
 		Self(value)
 	}
 }
@@ -100,7 +100,7 @@ impl Derivative for UnknownId{
 
 pub struct Scalar<T>(T);
 impl<T> Scalar<T>{
-	pub fn new(value:T)->Self{
+	pub const fn new(value:T)->Self{
 		Self(value)
 	}
 }
@@ -146,7 +146,7 @@ impl<T,B> std::ops::Mul<B> for Scalar<T>{
 // }
 pub struct Plus<A,B>(A,B);
 impl<A,B> Plus<A,B>{
-	pub fn new(a:A,b:B)->Self{
+	pub const fn new(a:A,b:B)->Self{
 		Self(a,b)
 	}
 }
@@ -182,7 +182,7 @@ impl<A,B,C> std::ops::Mul<C> for Plus<A,B>{
 
 pub struct Times<A,B>(A,B);
 impl<A,B> Times<A,B>{
-	pub fn new(a:A,b:B)->Self{
+	pub const fn new(a:A,b:B)->Self{
 		Self(a,b)
 	}
 }
