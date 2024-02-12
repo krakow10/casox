@@ -6,7 +6,7 @@ mod tests{
 
 	#[test]
 	fn evaluate(){
-		let x=UnknownId::new(0);
+		let x=VariableId::new(0);
 		let one=Constant::new(1.0);
 		let two=Constant::new(2.0);
 		let sum=one+two;
@@ -15,7 +15,7 @@ mod tests{
 	}
 	#[test]
 	fn try_evaluate(){
-		let x=UnknownId::new(0);
+		let x=VariableId::new(0);
 		let sum=Constant::new(2)+x;
 		let mut environment=HashMap::new();
 		environment.insert(x,1);
