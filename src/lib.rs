@@ -22,4 +22,16 @@ mod tests{
 		assert_eq!(sum.try_evaluate(&environment).unwrap(),3);
 		assert_eq!(sum.derivative(x).evaluate(),1);
 	}
+	#[test]
+	fn derivative(){
+		let mut gen=VariableGenerator::new();
+		let x=gen.var();//VariableId::new(0);
+		let y=gen.var();//VariableId::new(1);
+		let expr=x+y*x+pow(x,y);
+		let mut environment=HashMap::new();
+		environment.insert(x,3.0);//x=3.0
+		environment.insert(y,5.0);//y=5.0
+		assert_eq!(expr.try_evaluate(&environment).unwrap(),261.0);
+		assert_eq!(expr.derivative(x).try_evaluate(&environment).unwrap(),411.0);
+	}
 }
