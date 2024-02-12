@@ -32,6 +32,22 @@ pub trait TryEvaluate<T>{
 // 		Ok(self.evaluate())
 // 	}
 // }
+pub enum Replaced<E>{
+	Value(E),
+	Unknown(UnknownId),
+}
+impl<T:Copy,E:Evaluate<T>> TryEvaluate<T> for Replaced<E>{
+	fn try_evaluate(&self,values:&HashMap<UnknownId,T>)->Result<T,TryEvaluateError> {
+		match self{
+			Replaced::Value(v)=>Ok(v.evaluate()),
+			Replaced::Unknown(u)=>u.try_evaluate(values),
+		}
+	}
+}
+//you can only replace unknowns with evaluatable expressions
+pub trait Replace<T,E:Evaluate<T>>{
+	fn replace(&self,values:&HashMap<UnknownId,E>)->Replaced<E>;
+}
 pub trait Derivative{
 	type Derivative;
 	fn derivative(&self,unknown_id:UnknownId)->Self::Derivative;
