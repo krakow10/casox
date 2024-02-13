@@ -32,6 +32,15 @@ pub trait Derivative{
 	fn derivative(&self,unknown_id:VariableId)->Self::Derivative;
 }
 
+pub trait Simplify<T>:Evaluate<T>+TryReplace<T>+Derivative+Sized+Copy{
+	//default simplify does nothing
+	fn simplify(&self)->impl Evaluate<T>+TryReplace<T>+Simplify<T>+Derivative{
+		*self
+	}
+}
+
+pub trait Standard<T>:Evaluate<T>+TryReplace<T>+Simplify<T>+Derivative{}
+
 #[derive(Eq,PartialEq,Ord,PartialOrd)]
 enum OperationOrder{
 	Add,
@@ -326,6 +335,13 @@ impl<A,B,C> std::ops::Div<C> for Plus<A,B>{
 	}
 }
 
+//simplifications
+impl<T:std::ops::Add<T,Output=T>,A:Copy+Standard<T>,B:Zero+Copy+Standard<T>> Simplify<T> for Plus<A,B>{
+	fn simplify(&self)->impl Evaluate<T>+TryReplace<T>+Simplify<T>+Derivative{
+		self.0.simplify()
+	}
+}
+
 #[derive(Clone,Copy)]
 pub struct Minus<A,B>(A,B);
 impl<A,B> Minus<A,B>{
@@ -454,6 +470,13 @@ impl<A,B,C> std::ops::Div<C> for Times<A,B>{
 	type Output=Divide<Self,C>;
 	fn div(self,c:C)->Self::Output{
 		Divide(self,c)
+	}
+}
+
+//simplifications
+impl<T:std::ops::Mul<T,Output=T>,A:Copy+Standard<T>,B:Identity+Copy+Standard<T>> Simplify<T> for Times<A,B>{
+	fn simplify(&self)->impl Evaluate<T>+TryReplace<T>+Simplify<T>+Derivative{
+		self.0.simplify()
 	}
 }
 
