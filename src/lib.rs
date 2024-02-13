@@ -49,4 +49,15 @@ mod tests{
 		env.insert(y,"y");
 		assert_eq!(format!("{}",expr.try_replace(&env).unwrap()),"x+y*(x+1)+(x^2)^y+log(x)");
 	}
+	#[test]
+	fn derivative_spam(){
+		let mut gen=VariableGenerator::new();
+		let x=gen.var();//VariableId::new(0);
+		let y=gen.var();//VariableId::new(1);
+		let expr=x+y*x+pow(x,y);
+		let mut env=HashMap::new();
+		env.insert(x,"x");//x=3.0
+		env.insert(y,"y");//y=5.0
+		println!("{}",expr.derivative(x).derivative(x).derivative(x).derivative(x).derivative(x).derivative(x).try_replace(&env).unwrap());
+	}
 }
