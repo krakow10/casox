@@ -1,12 +1,5 @@
 use std::collections::HashMap;
 
-pub trait Zero{
-	fn zero()->Self;
-}
-pub trait Identity{
-	fn identity()->Self;
-}
-
 pub trait Evaluate<T>{
 	fn evaluate(&self)->T;
 }
@@ -64,63 +57,66 @@ trait DisplayExpr:std::fmt::Display+Operation{
 	}
 }
 
-//f32
-impl Zero for f32{
-	fn zero()->f32{
+//turns into the respective typed value during evaluation
+#[derive(Clone,Copy)]
+pub struct Zero;
+impl Evaluate<f32> for Zero{
+	fn evaluate(&self)->f32{
 		0.0
 	}
 }
-impl Identity for f32{
-	fn identity()->f32{
-		1.0
-	}
-}
-//i32
-impl Zero for i32{
-	fn zero()->i32{
+impl Evaluate<i32> for Zero{
+	fn evaluate(&self)->i32{
 		0
 	}
 }
-impl Identity for i32{
-	fn identity()->i32{
-		1
-	}
-}
-
-//turns into the respective typed value during evaluation
-#[derive(Clone,Copy)]
-pub enum Morph{
-	Zero,
-	Identity,
-}
-impl std::fmt::Display for Morph{
+impl std::fmt::Display for Zero{
 	fn fmt(&self,f:&mut std::fmt::Formatter<'_>)->std::fmt::Result{
-		match self{
-			Morph::Zero=>write!(f,"0"),
-			Morph::Identity=>write!(f,"1"),
-		}
+		write!(f,"0")
 	}
 }
-impl Operation for Morph{}
-impl DisplayExpr for Morph{}
-impl<T:Zero+Identity> Evaluate<T> for Morph{
-	fn evaluate(&self)->T{
-		match self{
-			Morph::Zero=>T::zero(),
-			Morph::Identity=>T::identity(),
-		}
-	}
-}
-impl<T> TryReplace<T> for Morph{
+impl Operation for Zero{}
+impl DisplayExpr for Zero{}
+impl<T> TryReplace<T> for Zero{
 	type Output=Self;
 	fn try_replace(&self,_values:&HashMap<VariableId,T>)->Result<Self::Output,TryReplaceError>{
 		Ok(*self)
 	}
 }
-impl Derivative for Morph{
-	type Derivative=Morph;
+impl Derivative for Zero{
+	type Derivative=Zero;
 	fn derivative(&self,_unknown_id:VariableId)->Self::Derivative{
-		Morph::Zero
+		Zero
+	}
+}
+
+#[derive(Clone,Copy)]
+pub struct Identity;
+impl Evaluate<f32> for Identity{
+	fn evaluate(&self)->f32{
+		1.0
+	}
+}
+impl Evaluate<i32> for Identity{
+	fn evaluate(&self)->i32{
+		1
+	}
+}
+impl std::fmt::Display for Identity{
+	fn fmt(&self,f:&mut std::fmt::Formatter<'_>)->std::fmt::Result{
+		write!(f,"1")
+	}
+}
+impl<T> TryReplace<T> for Identity{
+	type Output=Self;
+	fn try_replace(&self,_values:&HashMap<VariableId,T>)->Result<Self::Output,TryReplaceError>{
+		Ok(*self)
+	}
+}
+impl Derivative for Identity{
+	type Derivative=Zero;
+	fn derivative(&self,_unknown_id:VariableId)->Self::Derivative{
+		Zero
 	}
 }
 
@@ -159,7 +155,7 @@ impl<T:Copy> TryReplace<T> for VariableId{
 impl Derivative for VariableId{
 	type Derivative=Morph;
 	fn derivative(&self,unknown_id:VariableId)->Self::Derivative{
-		if *self==unknown_id{
+		if self.0==unknown_id.0{
 			Morph::Identity
 		}else{
 			Morph::Zero
@@ -220,10 +216,10 @@ impl<T:Copy> TryReplace<T> for Constant<T>{
 		Ok(*self)
 	}
 }
-impl<T:Zero> Derivative for Constant<T>{
-	type Derivative=Self;
+impl<T> Derivative for Constant<T>{
+	type Derivative=Zero;
 	fn derivative(&self,_unknown_id:VariableId)->Self::Derivative{
-		Self(T::zero())
+		Zero
 	}
 }
 //TODO: generalize arithmetic
