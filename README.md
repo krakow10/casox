@@ -3,6 +3,8 @@ Casox Computer Algebra System
 
 ### Computer Algebra System Using Rust Types
 
+I wrote this as a learning exercise to familliarize myself with Rust.  I was curious what would happen when you try to do derivatives at the type system level since I had already made a CAS in Lua (at least three actually).  It turns out it's very inflexible, and taking additional derivatives grows the expression and thus the type exponentially. There's no hope of dynamic simplification since the entire point is that the types are determined at compile time.  I still think it's cool and it might compile into decent assembly with a stricter evaluation method.
+
 ## Example
 ```rust
 use std::collections::HashMap;
