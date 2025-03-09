@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use core::ops::Index;
 
 pub trait Zero{
 	fn zero()->Self;
@@ -24,7 +24,7 @@ impl std::error::Error for TryReplaceError{}
 /// Replaces VariableId with Constant<T>.  If any variable is missing a replacement, it fails.
 pub trait TryReplace<T>{
 	type Output;
-	fn try_replace(&self,values:&HashMap<VariableId,T>)->Result<Self::Output,TryReplaceError>;
+	fn try_replace<V:Index<VariableId,Output=T>>(&self,values:V)->Result<Self::Output,TryReplaceError>;
 }
 
 pub trait Derivative{
@@ -113,7 +113,7 @@ impl<T:Zero+Identity> Evaluate<T> for Morph{
 }
 impl<T> TryReplace<T> for Morph{
 	type Output=Self;
-	fn try_replace(&self,_values:&HashMap<VariableId,T>)->Result<Self::Output,TryReplaceError>{
+	fn try_replace<V>(&self,_values:V)->Result<Self::Output,TryReplaceError>{
 		Ok(*self)
 	}
 }
@@ -211,7 +211,7 @@ impl Operation for VariableId{}
 impl DisplayExpr for VariableId{}
 impl<T:Copy> TryReplace<T> for VariableId{
 	type Output=Constant<T>;
-	fn try_replace(&self,values:&HashMap<VariableId,T>)->Result<Self::Output,TryReplaceError>{
+	fn try_replace<V:Index<VariableId,Output=T>>(&self,values:V)->Result<Self::Output,TryReplaceError>{
 		values.get(self).copied().map(Constant::new).ok_or(TryReplaceError::MissingUnknown(*self))
 	}
 }
