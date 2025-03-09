@@ -51,10 +51,7 @@ trait DisplayExpr:std::fmt::Display+Operation{
 		let add_parentheses=match (self.operation(),parent_operation){
 			//always use parentheses for powers within powers
 			(Some(OperationOrder::Pow),Some(OperationOrder::Pow))=>true,
-			(Some(op),Some(parent_op))=>match op.cmp(parent_op){
-				std::cmp::Ordering::Less=>true,
-				_=>false,
-			},
+			(Some(ref op),Some(parent_op))=>op<parent_op,
 			_=>false,
 		};
 		match add_parentheses{
