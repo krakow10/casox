@@ -135,6 +135,65 @@ impl VariableGenerator{
 		variable
 	}
 }
+
+// arithmetic macros
+macro_rules! arithmetic_impl_gen_0_binary{
+	($name:ident,$op:ident,$method:ident,$type:ident)=>{
+		impl<C> core::ops::$op<C> for $type{
+			type Output=$name<Self,C>;
+			fn $method(self,c:C)->Self::Output{
+				$name(self,c)
+			}
+		}
+	};
+}
+macro_rules! arithmetic_gen_0{
+	($type:ident)=>{
+		arithmetic_impl_gen_0_binary!(Plus,Add,add,$type);
+		arithmetic_impl_gen_0_binary!(Times,Mul,mul,$type);
+		arithmetic_impl_gen_0_binary!(Minus,Sub,sub,$type);
+		arithmetic_impl_gen_0_binary!(Divide,Div,div,$type);
+	};
+}
+
+macro_rules! arithmetic_impl_gen_1_binary{
+	($name:ident,$op:ident,$method:ident,$type:ident)=>{
+		impl<A,C> core::ops::$op<C> for $type<A>{
+			type Output=$name<Self,C>;
+			fn $method(self,c:C)->Self::Output{
+				$name(self,c)
+			}
+		}
+	};
+}
+macro_rules! arithmetic_gen_1{
+	($type:ident)=>{
+		arithmetic_impl_gen_1_binary!(Plus,Add,add,$type);
+		arithmetic_impl_gen_1_binary!(Times,Mul,mul,$type);
+		arithmetic_impl_gen_1_binary!(Minus,Sub,sub,$type);
+		arithmetic_impl_gen_1_binary!(Divide,Div,div,$type);
+	};
+}
+
+macro_rules! arithmetic_impl_gen_2_binary{
+	($name:ident,$op:ident,$method:ident,$type:ident)=>{
+		impl<A,B,C> core::ops::$op<C> for $type<A,B>{
+			type Output=$name<Self,C>;
+			fn $method(self,c:C)->Self::Output{
+				$name(self,c)
+			}
+		}
+	};
+}
+macro_rules! arithmetic_gen_2{
+	($type:ident)=>{
+		arithmetic_impl_gen_2_binary!(Plus,Add,add,$type);
+		arithmetic_impl_gen_2_binary!(Times,Mul,mul,$type);
+		arithmetic_impl_gen_2_binary!(Minus,Sub,sub,$type);
+		arithmetic_impl_gen_2_binary!(Divide,Div,div,$type);
+	};
+}
+
 //represents an unknown value.  gains the type of the current evaluation.
 #[derive(Clone,Copy,Debug,Hash,Eq,PartialEq)]
 pub struct VariableId(u32);
@@ -166,31 +225,8 @@ impl Derivative for VariableId{
 		}
 	}
 }
-//TODO: generalize arithmetic
-impl<C> std::ops::Add<C> for VariableId{
-	type Output=Plus<Self,C>;
-	fn add(self,c:C)->Self::Output{
-		Plus(self,c)
-	}
-}
-impl<C> std::ops::Mul<C> for VariableId{
-	type Output=Times<Self,C>;
-	fn mul(self,c:C)->Self::Output{
-		Times(self,c)
-	}
-}
-impl<C> std::ops::Sub<C> for VariableId{
-	type Output=Minus<Self,C>;
-	fn sub(self,c:C)->Self::Output{
-		Minus(self,c)
-	}
-}
-impl<C> std::ops::Div<C> for VariableId{
-	type Output=Divide<Self,C>;
-	fn div(self,c:C)->Self::Output{
-		Divide(self,c)
-	}
-}
+
+arithmetic_gen_0!(VariableId);
 
 #[derive(Clone,Copy)]
 pub struct Constant<T>(T);
@@ -226,32 +262,7 @@ impl<T:Zero> Derivative for Constant<T>{
 		Self(T::zero())
 	}
 }
-//TODO: generalize arithmetic
-//use macros?
-impl<A,C> std::ops::Add<C> for Constant<A>{
-	type Output=Plus<Self,C>;
-	fn add(self,c:C)->Self::Output{
-		Plus(self,c)
-	}
-}
-impl<A,C> std::ops::Mul<C> for Constant<A>{
-	type Output=Times<Self,C>;
-	fn mul(self,c:C)->Self::Output{
-		Times(self,c)
-	}
-}
-impl<A,C> std::ops::Sub<C> for Constant<A>{
-	type Output=Minus<Self,C>;
-	fn sub(self,c:C)->Self::Output{
-		Minus(self,c)
-	}
-}
-impl<A,C> std::ops::Div<C> for Constant<A>{
-	type Output=Divide<Self,C>;
-	fn div(self,c:C)->Self::Output{
-		Divide(self,c)
-	}
-}
+arithmetic_gen_1!(Constant);
 
 //TODO: something nice like this
 // pub trait Arithmetic:Add+Sub+Mul+Div+Pow+Mod{}
@@ -301,30 +312,7 @@ impl<A:Derivative,B:Derivative> Derivative for Plus<A,B>{
 	}
 }
 //arithmetic
-impl<A,B,C> std::ops::Add<C> for Plus<A,B>{
-	type Output=Plus<Self,C>;
-	fn add(self,c:C)->Self::Output{
-		Plus(self,c)
-	}
-}
-impl<A,B,C> std::ops::Mul<C> for Plus<A,B>{
-	type Output=Times<Self,C>;
-	fn mul(self,c:C)->Self::Output{
-		Times(self,c)
-	}
-}
-impl<A,B,C> std::ops::Sub<C> for Plus<A,B>{
-	type Output=Minus<Self,C>;
-	fn sub(self,c:C)->Self::Output{
-		Minus(self,c)
-	}
-}
-impl<A,B,C> std::ops::Div<C> for Plus<A,B>{
-	type Output=Divide<Self,C>;
-	fn div(self,c:C)->Self::Output{
-		Divide(self,c)
-	}
-}
+arithmetic_gen_2!(Plus);
 
 #[derive(Clone,Copy)]
 pub struct Minus<A,B>(A,B);
@@ -365,30 +353,7 @@ impl<A:Derivative,B:Derivative> Derivative for Minus<A,B>{
 	}
 }
 //arithmetic
-impl<A,B,C> std::ops::Add<C> for Minus<A,B>{
-	type Output=Plus<Self,C>;
-	fn add(self,c:C)->Self::Output{
-		Plus(self,c)
-	}
-}
-impl<A,B,C> std::ops::Mul<C> for Minus<A,B>{
-	type Output=Times<Self,C>;
-	fn mul(self,c:C)->Self::Output{
-		Times(self,c)
-	}
-}
-impl<A,B,C> std::ops::Sub<C> for Minus<A,B>{
-	type Output=Minus<Self,C>;
-	fn sub(self,c:C)->Self::Output{
-		Minus(self,c)
-	}
-}
-impl<A,B,C> std::ops::Div<C> for Minus<A,B>{
-	type Output=Divide<Self,C>;
-	fn div(self,c:C)->Self::Output{
-		Divide(self,c)
-	}
-}
+arithmetic_gen_2!(Minus);
 
 #[derive(Clone,Copy)]
 pub struct Times<A,B>(A,B);
@@ -432,30 +397,7 @@ impl<A:Derivative+Copy,B:Derivative+Copy> Derivative for Times<A,B>{
 	}
 }
 //arithmetic
-impl<A,B,C> std::ops::Add<C> for Times<A,B>{
-	type Output=Plus<Self,C>;
-	fn add(self,c:C)->Self::Output{
-		Plus(self,c)
-	}
-}
-impl<A,B,C> std::ops::Mul<C> for Times<A,B>{
-	type Output=Times<Self,C>;
-	fn mul(self,c:C)->Self::Output{
-		Times(self,c)
-	}
-}
-impl<A,B,C> std::ops::Sub<C> for Times<A,B>{
-	type Output=Minus<Self,C>;
-	fn sub(self,c:C)->Self::Output{
-		Minus(self,c)
-	}
-}
-impl<A,B,C> std::ops::Div<C> for Times<A,B>{
-	type Output=Divide<Self,C>;
-	fn div(self,c:C)->Self::Output{
-		Divide(self,c)
-	}
-}
+arithmetic_gen_2!(Times);
 
 #[derive(Clone,Copy)]
 pub struct Divide<A,B>(A,B);
@@ -496,30 +438,7 @@ impl<A:Derivative+Copy,B:Derivative+Copy> Derivative for Divide<A,B>{
 	}
 }
 //arithmetic
-impl<A,B,C> std::ops::Add<C> for Divide<A,B>{
-	type Output=Plus<Self,C>;
-	fn add(self,c:C)->Self::Output{
-		Plus(self,c)
-	}
-}
-impl<A,B,C> std::ops::Mul<C> for Divide<A,B>{
-	type Output=Times<Self,C>;
-	fn mul(self,c:C)->Self::Output{
-		Times(self,c)
-	}
-}
-impl<A,B,C> std::ops::Sub<C> for Divide<A,B>{
-	type Output=Minus<Self,C>;
-	fn sub(self,c:C)->Self::Output{
-		Minus(self,c)
-	}
-}
-impl<A,B,C> std::ops::Div<C> for Divide<A,B>{
-	type Output=Divide<A,Times<B,C>>;
-	fn div(self,c:C)->Self::Output{
-		Divide(self.0,Times(self.1,c))
-	}
-}
+arithmetic_gen_2!(Divide);
 
 pub trait Pow<Rhs=Self>{
 	type Output;
@@ -580,30 +499,7 @@ impl<A:Derivative+Copy,B:Derivative+Copy> Derivative for Power<A,B>{
 	}
 }
 //arithmetic
-impl<A,B,C> std::ops::Add<C> for Power<A,B>{
-	type Output=Plus<Self,C>;
-	fn add(self,c:C)->Self::Output{
-		Plus(self,c)
-	}
-}
-impl<A,B,C> std::ops::Mul<C> for Power<A,B>{
-	type Output=Times<Self,C>;
-	fn mul(self,c:C)->Self::Output{
-		Times(self,c)
-	}
-}
-impl<A,B,C> std::ops::Sub<C> for Power<A,B>{
-	type Output=Minus<Self,C>;
-	fn sub(self,c:C)->Self::Output{
-		Minus(self,c)
-	}
-}
-impl<A,B,C> std::ops::Div<C> for Power<A,B>{
-	type Output=Divide<Self,C>;
-	fn div(self,c:C)->Self::Output{
-		Divide(self,c)
-	}
-}
+arithmetic_gen_2!(Power);
 
 pub trait Logarithm{
 	type Output;
@@ -653,30 +549,7 @@ impl<A:Derivative+Copy> Derivative for Log<A>{
 	}
 }
 //arithmetic
-impl<A,C> std::ops::Add<C> for Log<A>{
-	type Output=Plus<Self,C>;
-	fn add(self,c:C)->Self::Output{
-		Plus(self,c)
-	}
-}
-impl<A,C> std::ops::Mul<C> for Log<A>{
-	type Output=Times<Self,C>;
-	fn mul(self,c:C)->Self::Output{
-		Times(self,c)
-	}
-}
-impl<A,C> std::ops::Sub<C> for Log<A>{
-	type Output=Minus<Self,C>;
-	fn sub(self,c:C)->Self::Output{
-		Minus(self,c)
-	}
-}
-impl<A,C> std::ops::Div<C> for Log<A>{
-	type Output=Divide<Self,C>;
-	fn div(self,c:C)->Self::Output{
-		Divide(self,c)
-	}
-}
+arithmetic_gen_1!(Log);
 
 pub trait Expable{
 	type Output;
@@ -726,27 +599,4 @@ impl<A:Derivative+Copy> Derivative for Exp<A>{
 	}
 }
 //arithmetic
-impl<A,C> std::ops::Add<C> for Exp<A>{
-	type Output=Plus<Self,C>;
-	fn add(self,c:C)->Self::Output{
-		Plus(self,c)
-	}
-}
-impl<A,C> std::ops::Mul<C> for Exp<A>{
-	type Output=Times<Self,C>;
-	fn mul(self,c:C)->Self::Output{
-		Times(self,c)
-	}
-}
-impl<A,C> std::ops::Sub<C> for Exp<A>{
-	type Output=Minus<Self,C>;
-	fn sub(self,c:C)->Self::Output{
-		Minus(self,c)
-	}
-}
-impl<A,C> std::ops::Div<C> for Exp<A>{
-	type Output=Divide<Self,C>;
-	fn div(self,c:C)->Self::Output{
-		Divide(self,c)
-	}
-}
+arithmetic_gen_1!(Exp);
