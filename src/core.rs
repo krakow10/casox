@@ -264,14 +264,6 @@ impl<T:Zero> Derivative for Constant<T>{
 }
 arithmetic_gen_1!(Constant);
 
-//TODO: something nice like this
-// pub trait Arithmetic:Add+Sub+Mul+Div+Pow+Mod{}
-// impl<A:Add,B:Add> std::ops::Add<B> for A{
-// 	type Output=Plus<A,B>;
-// 	fn add(a:A,b:B)->Self::Output{
-// 		Plus(a,b)
-// 	}
-// }
 #[derive(Clone,Copy)]
 pub struct Plus<A,B>(A,B);
 impl<A,B> Plus<A,B>{
